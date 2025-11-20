@@ -2,6 +2,9 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 
+// Components
+import SpecialtiesDisplay from "@/components/Specialties";
+
 // Types
 import { Advocate } from "@/db/schema";
 
@@ -103,11 +106,7 @@ export default function Home() {
                   <td className="px-6 py-4">{advocate.city}</td>
                   <td className="px-6 py-4">{advocate.degree}</td>
                   <td className="px-6 py-4">
-                    <ul>
-                      {advocate.specialties.map((s) => (
-                        <li key={`${advocate.id}-${s}`}>{s}</li>
-                      ))}
-                    </ul>
+                    <SpecialtiesDisplay specialtiesList={advocate.specialties} />
                   </td>
                   <td className="px-6 py-4">{advocate.yearsOfExperience}</td>
                   <td className="px-6 py-4">{advocate.phoneNumber}</td>
