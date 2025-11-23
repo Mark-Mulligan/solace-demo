@@ -1,6 +1,6 @@
 import { db } from "../../../db";
 import { advocates } from "../../../db/schema";
-import { asc, sql } from "drizzle-orm";
+import { asc, desc, sql } from "drizzle-orm";
 import { Advocate } from "../../../db/schema";
 
 export type AdvocateDataResponse = {
@@ -11,11 +11,37 @@ export type AdvocateDataResponse = {
   totalResults: number;
 };
 
+const validSortColumns = [
+  "firstName",
+  "lastName",
+  "city",
+  "yearsOfExperience",
+] as const;
+export type SortableColumns = (typeof validSortColumns)[number];
+
+const createSorting = (sort: string, order: string) => {
+  let sorting = asc(advocates.id);
+
+  if (validSortColumns.includes(sort as SortableColumns)) {
+    const column = advocates[sort as SortableColumns];
+
+    if (order === "asc") {
+      sorting = asc(column);
+    } else if (order === "desc") {
+      sorting = desc(column);
+    }
+  }
+
+  return sorting;
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") ?? "";
   const term = `%${search.toLowerCase()}%`;
   const page = Number(searchParams.get("page") ?? "1");
+  const sort = searchParams.get("sort") ?? "";
+  const order = searchParams.get("order") ?? "";
 
   const pageSize = 10;
   const offset = (page - 1) * pageSize;
@@ -31,12 +57,14 @@ export async function GET(request: Request) {
     ${advocates.phoneNumber}::text ILIKE ${"%" + term + "%"}
   `;
 
+  const sorting = createSorting(sort, order);
+
   const [data, totalResults] = await Promise.all([
     db
       .select()
       .from(advocates)
       .where(whereClause)
-      .orderBy(asc(advocates.id))
+      .orderBy(sorting)
       .limit(pageSize)
       .offset(offset),
 
