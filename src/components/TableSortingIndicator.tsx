@@ -1,6 +1,8 @@
+// Third Party
 import { FC, useMemo } from "react";
 import { useRouter } from "next/router";
 
+// Types
 import { SortableColumns } from "@/app/api/advocates/route";
 
 interface IProps {

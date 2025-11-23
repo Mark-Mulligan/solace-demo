@@ -1,7 +1,9 @@
-import { db } from "../../../db";
-import { advocates } from "../../../db/schema";
+// Third Party
 import { asc, desc, sql } from "drizzle-orm";
-import { Advocate } from "../../../db/schema";
+
+// DB
+import { db } from "../../../db";
+import { advocates, Advocate } from "../../../db/schema";
 
 export type AdvocateDataResponse = {
   data: Advocate[];
