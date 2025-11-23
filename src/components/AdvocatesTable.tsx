@@ -1,15 +1,17 @@
 // Third Party
-import { FC } from "react";
+import { FC, useState } from "react";
 import { useRouter } from "next/router";
 
 // Components
 import SpecialtiesDisplay from "./Specialties";
+import TableSortingIndicator from "./TableSortingIndicator";
 
 // Utils
 import { formatPhoneNumber } from "@/utils/formatPhoneNumber";
 
 // Types
 import { AdvocateDataResponse } from "@/app/api/advocates/route";
+import { SortableColumns } from "@/app/api/advocates/route";
 
 interface IProps {
   advocateSearchData: AdvocateDataResponse;
@@ -17,6 +19,28 @@ interface IProps {
 
 const AdovcatesTable: FC<IProps> = ({ advocateSearchData }) => {
   const router = useRouter();
+
+  const handleColumnSortClick = (colName: SortableColumns) => {
+    const sortBy = router.query.sort;
+    const order = router.query.order;
+
+    let queryObject: { [key: string]: string | string[] | undefined } = {
+      ...router.query,
+    };
+
+    if (sortBy === colName && order === "asc") {
+      queryObject = { ...queryObject, sort: colName, order: "desc" };
+    } else if (sortBy === colName && order === "desc") {
+      delete queryObject.sort;
+      delete queryObject.order;
+    } else if (sortBy !== colName) {
+      queryObject = { ...queryObject, sort: colName, order: "asc" };
+    }
+
+    router.push({ pathname: "/", query: queryObject }, undefined, {
+      shallow: true,
+    });
+  };
 
   const handlePaginationClick = (page: number) => {
     let queryObject: { [key: string]: string } = {
@@ -36,21 +60,33 @@ const AdovcatesTable: FC<IProps> = ({ advocateSearchData }) => {
           <tr>
             <th
               scope="col"
-              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1"
+              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1 group cursor-pointer"
+              onClick={() => handleColumnSortClick("firstName")}
             >
-              First Name
+              <div className="flex gap-1 items-center">
+                <span>First Name</span>
+                <TableSortingIndicator colName="firstName" />
+              </div>
             </th>
             <th
               scope="col"
-              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1"
+              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1 group cursor-pointer"
+              onClick={() => handleColumnSortClick("lastName")}
             >
-              Last Name
+              <div className="flex gap-1 items-center">
+                <span>Last Name</span>
+                <TableSortingIndicator colName="lastName" />
+              </div>
             </th>
             <th
               scope="col"
-              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1"
+              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1 group cursor-pointer"
+              onClick={() => handleColumnSortClick("city")}
             >
-              City
+              <div className="flex gap-1 items-center">
+                <span>City</span>
+                <TableSortingIndicator colName="city" />
+              </div>
             </th>
             <th
               scope="col"
@@ -66,9 +102,13 @@ const AdovcatesTable: FC<IProps> = ({ advocateSearchData }) => {
             </th>
             <th
               scope="col"
-              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1"
+              className="xl:px-6 lg:px-4 px-2 xl:py-3 lg:py-2 py-1 group cursor-pointer"
+              onClick={() => handleColumnSortClick("yearsOfExperience")}
             >
-              Years of Experience
+              <div className="flex gap-1 items-center">
+                <span>Years of Experience</span>
+                <TableSortingIndicator colName="yearsOfExperience" />
+              </div>
             </th>
             <th
               scope="col"

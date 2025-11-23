@@ -30,11 +30,13 @@ export default function Home() {
     const getAdvocates = async () => {
       const search = router.query.search;
       const page = router.query.page;
+      const sort = router.query.sort;
+      const order = router.query.order;
 
       try {
         const { data } = await axios.get<AdvocateDataResponse>(
           "/api/advocates",
-          { params: { search, page } }
+          { params: { search, page, sort, order } }
         );
         setAdvocateSearchData(data);
       } catch (error) {
