@@ -33,7 +33,7 @@ Here are a few things I would do if given more time to improve this project:
 
 ## Setup
 
-You should be able to run the project by following the setup steps given in the README.md provided with the project. I used a local instance of postgres running in docker to power the backend as provided in the readme.
+Use the main branch in the project. You should be able to run the project by following the setup steps given in the README.md provided with the project. I used a local instance of postgres running in docker to power the backend as provided in the readme.
 
 ## Final Note
 
