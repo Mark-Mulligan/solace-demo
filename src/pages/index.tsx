@@ -1,15 +1,13 @@
 // Third Party
-import { ChangeEvent, MouseEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import axios from "axios";
 
 // Components
 import AdovcatesSearchForm from "@/components/AdvocatesSearchForm";
 import AdovcatesTable from "@/components/AdvocatesTable";
-
-// Utils
-import { debounce } from "@/utils/debounce";
 
 // Types
 import { AdvocateDataResponse } from "@/app/api/advocates/route";
@@ -56,7 +54,15 @@ export default function Home() {
         <meta name="description" content="Show us what you got" />
       </Head>
       <main className="mb-6">
-        <nav className="bg-solaceGreen p-6" />
+        <nav className="bg-solaceGreen p-4 text-center">
+          <Image
+            className="m-auto"
+            src="/solaceLogo.svg"
+            alt="solace logo"
+            width={90}
+            height={25}
+          />
+        </nav>
 
         <div className="max-w-screen-2xl mx-auto px-2 mt-8">
           <div className="mb-8">
