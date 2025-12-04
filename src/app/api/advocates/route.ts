@@ -3,7 +3,12 @@ import { asc, desc, sql } from "drizzle-orm";
 
 // DB
 import { db } from "../../../db";
-import { advocates, Advocate } from "../../../db/schema";
+import {
+  advocates,
+  Advocate,
+  specialties,
+  advocateSpecialties,
+} from "../../../db/schema";
 
 export type AdvocateDataResponse = {
   data: Advocate[];
@@ -54,7 +59,6 @@ export async function GET(request: Request) {
   } OR
     ${advocates.city} ILIKE ${"%" + term + "%"} OR
     ${advocates.degree} ILIKE ${"%" + term + "%"} OR
-    ${advocates.specialties}::text ILIKE ${"%" + term + "%"} OR
     ${advocates.yearsOfExperience}::text ILIKE ${"%" + term + "%"} OR
     ${advocates.phoneNumber}::text ILIKE ${"%" + term + "%"}
   `;
@@ -63,9 +67,35 @@ export async function GET(request: Request) {
 
   const [data, totalResults] = await Promise.all([
     db
-      .select()
+      .select({
+        id: advocates.id,
+        firstName: advocates.firstName,
+        lastName: advocates.lastName,
+        city: advocates.city,
+        degree: advocates.degree,
+        yearsOfExperience: advocates.yearsOfExperience,
+        phoneNumber: advocates.phoneNumber,
+        specialties: sql<string>`array_agg(${specialties.name})`,
+      })
       .from(advocates)
+      .leftJoin(
+        advocateSpecialties,
+        () => sql`${advocateSpecialties.advocateId} = ${advocates.id}`
+      )
+      .leftJoin(
+        specialties,
+        () => sql`${specialties.id} = ${advocateSpecialties.specialtyId}`
+      )
       .where(whereClause)
+      .groupBy(
+        advocates.id,
+        advocates.firstName,
+        advocates.lastName,
+        advocates.city,
+        advocates.degree,
+        advocates.yearsOfExperience,
+        advocates.phoneNumber
+      )
       .orderBy(sorting)
       .limit(pageSize)
       .offset(offset),
@@ -76,7 +106,6 @@ export async function GET(request: Request) {
       .where(whereClause)
       .then((r) => Number(r[0].count)),
   ]);
-
   const start = offset + 1;
   const end =
     totalResults <= offset + pageSize ? totalResults : offset + pageSize;

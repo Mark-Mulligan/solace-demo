@@ -15,11 +15,25 @@ const advocates = pgTable("advocates", {
   lastName: text("last_name").notNull(),
   city: text("city").notNull(),
   degree: text("degree").notNull(),
-  specialties: jsonb("specialties").$type<string[]>().default([]).notNull(),
   yearsOfExperience: integer("years_of_experience").notNull(),
   phoneNumber: bigint("phone_number", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
+const specialties = pgTable("specialties", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+const advocateSpecialties = pgTable("advocate_specialties", {
+  id: serial("id").primaryKey(),
+  advocateId: integer("advocate_id")
+    .notNull()
+    .references(() => advocates.id),
+  specialtyId: integer("specialty_id")
+    .notNull()
+    .references(() => specialties.id),
+});
+
 export type Advocate = typeof advocates.$inferSelect;
-export { advocates };
+export { advocates, specialties, advocateSpecialties };
