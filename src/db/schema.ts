@@ -36,4 +36,5 @@ const advocateSpecialties = pgTable("advocate_specialties", {
 });
 
 export type Advocate = typeof advocates.$inferSelect;
+export type Specialty = typeof specialties.$inferSelect;
 export { advocates, specialties, advocateSpecialties };

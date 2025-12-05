@@ -1,5 +1,5 @@
 // Third Party
-import { ChangeEvent, MouseEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import axios from "axios";
@@ -7,9 +7,6 @@ import axios from "axios";
 // Components
 import AdovcatesSearchForm from "@/components/AdvocatesSearchForm";
 import AdovcatesTable from "@/components/AdvocatesTable";
-
-// Utils
-import { debounce } from "@/utils/debounce";
 
 // Types
 import { AdvocateDataResponse } from "@/app/api/advocates/route";
@@ -32,11 +29,12 @@ export default function Home() {
       const page = router.query.page;
       const sort = router.query.sort;
       const order = router.query.order;
+      const specialty = router.query.specialty;
 
       try {
         const { data } = await axios.get<AdvocateDataResponse>(
           "/api/advocates",
-          { params: { search, page, sort, order } }
+          { params: { search, page, sort, order, specialty } }
         );
         setAdvocateSearchData(data);
       } catch (error) {
