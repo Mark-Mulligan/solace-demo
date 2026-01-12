@@ -30,3 +30,11 @@ Here are a few things I would do if given more time to improve this project:
 3.  I would add more UI features to handle loading states when searching or filtering the table. Right now, there is no noticeable delay because the data is small and everything is local. However, once deployed with a larger data set, there will be delays, so it would be useful to show the user when search results are loading.
 
 4.  I would add TanStack Query on the frontend to help with loading states as well as caching search result data.
+
+## Setup
+
+Use the main branch in the project. You should be able to run the project by following the setup steps given in the README.md provided with the project. I used a local instance of postgres running in docker to power the backend as provided in the readme.
+
+## Final Note
+
+Thanks for taking the time to look over this. If you want to see something else I have been working on, check out [fluencyforge.com](https://www.fluencyforge.com/).
