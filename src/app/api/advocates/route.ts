@@ -53,7 +53,12 @@ export async function GET(request: Request) {
   const page = Number(searchParams.get("page") ?? "1");
   const sort = searchParams.get("sort") ?? null;
   const order = searchParams.get("order") ?? null;
-  const specialtyId = searchParams.get("specialty") ?? null;
+  const specialties = searchParams.get("specialty") ?? null;
+
+  // Format as PostgreSQL array literal: '{1,2,3}' or null
+  const specialtyIds = specialties
+    ? `{${specialties.split(",").map(Number).join(",")}}`
+    : null;
 
   const pageSize = 10;
   const offset = (page - 1) * pageSize;
@@ -69,15 +74,15 @@ export async function GET(request: Request) {
     specialties: string[];
     totalCount: number;
   }>(sql`
-  SELECT * FROM fn_get_advocates(
-    p_specialty_id := ${specialtyId},
-    p_term := ${term},
-    p_page := ${page},
-    p_page_size := ${pageSize},
-    p_sort := ${sort},
-    p_order := ${order}
-  )
-`);
+    SELECT * FROM fn_get_advocates(
+      p_specialty_ids := ${specialtyIds}::INTEGER[],
+      p_term := ${term},
+      p_page := ${page},
+      p_page_size := ${pageSize},
+      p_sort := ${sort},
+      p_order := ${order}
+    )
+  `);
 
   const totalResults = data.length > 0 ? data[0].totalCount : 0;
   const start = offset + 1;

@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION fn_get_advocates(
-    p_specialty_id INTEGER DEFAULT NULL,
+    p_specialty_ids INTEGER[] DEFAULT NULL,
     p_term TEXT DEFAULT NULL,
     p_page INTEGER DEFAULT 1,
     p_page_size INTEGER DEFAULT 10,
@@ -50,15 +50,18 @@ BEGIN
                 a.city,
                 a.degree,
                 a.years_of_experience AS "yearsOfExperience",
-                a.phone_number AS "phoneNumber",
-                array_agg(s.name) AS specialties
+                a.phone_number AS "phoneNumber"
             FROM advocates a
-            LEFT JOIN advocate_specialties adv_spe
-                ON a.id = adv_spe.advocate_id
-            LEFT JOIN specialties s
-                ON adv_spe.specialty_id = s.id
             WHERE
-                ($1 IS NULL OR adv_spe.specialty_id = $1)
+                (
+                    $1 IS NULL 
+                    OR EXISTS (
+                        SELECT 1 
+                        FROM advocate_specialties adv_spe 
+                        WHERE adv_spe.advocate_id = a.id 
+                        AND adv_spe.specialty_id = ANY($1)
+                    )
+                )
                 AND (
                     $2 IS NULL
                     OR CONCAT(a.first_name, '' '', a.last_name) ILIKE ''%%'' || $2 || ''%%''
@@ -67,7 +70,23 @@ BEGIN
                     OR a.years_of_experience::text ILIKE ''%%'' || $2 || ''%%''
                     OR a.phone_number::text ILIKE ''%%'' || $2 || ''%%''
                 )
-            GROUP BY a.id, a.first_name, a.last_name, a.city, a.degree, a.years_of_experience, a.phone_number
+        ),
+        advocates_with_specialties AS (
+            SELECT
+                fa.id,
+                fa."firstName",
+                fa."lastName",
+                fa.city,
+                fa.degree,
+                fa."yearsOfExperience",
+                fa."phoneNumber",
+                array_agg(s.name) AS specialties
+            FROM filtered_advocates fa
+            LEFT JOIN advocate_specialties adv_spe
+                ON fa.id = adv_spe.advocate_id
+            LEFT JOIN specialties s
+                ON adv_spe.specialty_id = s.id
+            GROUP BY fa.id, fa."firstName", fa."lastName", fa.city, fa.degree, fa."yearsOfExperience", fa."phoneNumber"
         )
         SELECT
             fa.id,
@@ -79,10 +98,10 @@ BEGIN
             fa."phoneNumber",
             fa.specialties,
             COUNT(*) OVER() AS "totalCount"
-        FROM filtered_advocates fa
+        FROM advocates_with_specialties fa
         ORDER BY %s
         LIMIT $3 OFFSET $4
     ', v_order_by)
-    USING p_specialty_id, p_term, p_page_size, v_offset;
+    USING p_specialty_ids, p_term, p_page_size, v_offset;
 END;
 $$;

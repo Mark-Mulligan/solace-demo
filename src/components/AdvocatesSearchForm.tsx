@@ -2,7 +2,7 @@
 import { ChangeEvent, MouseEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
-import Select, { SingleValue } from "react-select";
+import Select, { MultiValue } from "react-select";
 
 // Utils
 import { debounce } from "@/utils/debounce";
@@ -19,10 +19,10 @@ const AdovcatesSearchForm = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [specialtyOptions, setSpecialtiesOptions] = useState<SelectOption[]>(
-    []
+    [],
   );
   const [selectedSpecialty, setSelectedSpecialty] =
-    useState<SingleValue<SelectOption | null>>(null);
+    useState<MultiValue<SelectOption> | null>(null);
 
   const debouncedSearch = useMemo(
     () =>
@@ -41,7 +41,7 @@ const AdovcatesSearchForm = () => {
           shallow: true,
         });
       }, 750),
-    [router]
+    [router],
   );
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -57,17 +57,16 @@ const AdovcatesSearchForm = () => {
     });
   };
 
-  const handleSpecialtySelect = (
-    newValue: SingleValue<SelectOption> | null
-  ) => {
-    console.log({ newValue });
-    let queryObject: { [key: string]: string } = {
+  const handleSpecialtySelect = (newValue: MultiValue<SelectOption> | null) => {
+    let queryObject: { [key: string]: string[] | string } = {
       ...router.query,
       page: "1",
     };
 
-    if (newValue) {
-      queryObject.specialty = newValue.value;
+    const newValues = newValue?.map((item) => item.value);
+
+    if (newValues) {
+      queryObject.specialty = newValues;
     } else {
       delete queryObject.specialty;
     }
@@ -95,26 +94,36 @@ const AdovcatesSearchForm = () => {
 
       if (typeof specialtyParam === "string") {
         const foundSpecialty = specialtyOptions.find(
-          (specialty) => specialty.value === specialtyParam
+          (specialty) => specialty.value === specialtyParam,
         );
 
-        if (foundSpecialty) {
-          setSelectedSpecialty(foundSpecialty);
-        } else {
+        if (!foundSpecialty) {
           setSelectedSpecialty(null);
+          return;
         }
-      } else {
-        setSelectedSpecialty(null);
+
+        setSelectedSpecialty([foundSpecialty]);
+        return;
       }
+
+      if (Array.isArray(specialtyParam)) {
+        const foundSpecialties = specialtyOptions.filter((specialty) =>
+          specialtyParam.includes(specialty.value),
+        );
+
+        setSelectedSpecialty(foundSpecialties);
+        return;
+      }
+
+      setSelectedSpecialty(null);
     }
   }, [router.query, specialtyOptions]);
 
   useEffect(() => {
     const getSpecialties = async () => {
       try {
-        const { data } = await axios.get<SpecialtyDataResponse>(
-          "/api/specialties"
-        );
+        const { data } =
+          await axios.get<SpecialtyDataResponse>("/api/specialties");
 
         const formattedSpecialties = data.data.map((specialty) => {
           return { value: specialty.id.toString(), label: specialty.name };
@@ -190,6 +199,7 @@ const AdovcatesSearchForm = () => {
           options={specialtyOptions}
           value={selectedSpecialty}
           onChange={handleSpecialtySelect}
+          isMulti
           isClearable
         />
       </div>

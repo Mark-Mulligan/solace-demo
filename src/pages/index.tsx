@@ -34,7 +34,17 @@ export default function Home() {
       try {
         const { data } = await axios.get<AdvocateDataResponse>(
           "/api/advocates",
-          { params: { search, page, sort, order, specialty } }
+          {
+            params: {
+              search,
+              page,
+              sort,
+              order,
+              specialty: Array.isArray(specialty)
+                ? specialty.join(",")
+                : specialty,
+            },
+          },
         );
         setAdvocateSearchData(data);
       } catch (error) {
