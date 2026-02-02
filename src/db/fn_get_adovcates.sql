@@ -1,44 +1,88 @@
 CREATE OR REPLACE FUNCTION fn_get_advocates(
-    p_specialty_id integer DEFAULT NULL,
-    p_term text DEFAULT NULL
+    p_specialty_id INTEGER DEFAULT NULL,
+    p_term TEXT DEFAULT NULL,
+    p_page INTEGER DEFAULT 1,
+    p_page_size INTEGER DEFAULT 10,
+    p_sort TEXT DEFAULT 'id',
+    p_order TEXT DEFAULT 'asc'
 )
 RETURNS TABLE (
-    id integer,
-    first_name text,
-    last_name text,
-    city text,
-    degree text,
-    years_of_experience integer,
-    phone_number text,
-    specialties text[]
+    id INTEGER,
+    "firstName" TEXT,
+    "lastName" TEXT,
+    city TEXT,
+    degree TEXT,
+    "yearsOfExperience" INTEGER,
+    "phoneNumber" BIGINT,
+    specialties TEXT[],
+    "totalCount" BIGINT
 )
-LANGUAGE sql
+LANGUAGE plpgsql
 AS $$
-SELECT
-    a.id,
-    a.first_name,
-    a.last_name,
-    a.city,
-    a.degree,
-    a.years_of_experience,
-    a.phone_number,
-    array_agg(s.name) AS specialties
-FROM advocates a
-LEFT JOIN advocate_specialties adv_spe
-    ON a.id = adv_spe.advocate_id
-LEFT JOIN specialties s
-    ON adv_spe.specialty_id = s.id
-WHERE
-    (p_specialty_id IS NULL OR adv_spe.specialty_id = p_specialty_id)
-    AND
-    (
-        p_term IS NULL
-        OR CONCAT(a.first_name, ' ', a.last_name) ILIKE '%' || p_term || '%'
-        OR a.city ILIKE '%' || p_term || '%'
-        OR a.degree ILIKE '%' || p_term || '%'
-        OR a.years_of_experience::text ILIKE '%' || p_term || '%'
-        OR a.phone_number::text ILIKE '%' || p_term || '%'
-    )
-GROUP BY a.id, a.first_name, a.last_name, a.city, a.degree, a.years_of_experience, a.phone_number
-ORDER BY a.id;
+DECLARE
+    v_offset INTEGER;
+    v_order_by TEXT;
+BEGIN
+    v_offset := (p_page - 1) * p_page_size;
+
+    v_order_by := CASE p_sort
+        WHEN 'firstName' THEN 'fa."firstName"'
+        WHEN 'lastName' THEN 'fa."lastName"'
+        WHEN 'city' THEN 'fa.city'
+        WHEN 'degree' THEN 'fa.degree'
+        WHEN 'yearsOfExperience' THEN 'fa."yearsOfExperience"'
+        WHEN 'phoneNumber' THEN 'fa."phoneNumber"'
+        ELSE 'fa.id'
+    END;
+
+    IF LOWER(p_order) = 'desc' THEN
+        v_order_by := v_order_by || ' DESC';
+    ELSE
+        v_order_by := v_order_by || ' ASC';
+    END IF;
+
+    RETURN QUERY EXECUTE format('
+        WITH filtered_advocates AS (
+            SELECT
+                a.id,
+                a.first_name AS "firstName",
+                a.last_name AS "lastName",
+                a.city,
+                a.degree,
+                a.years_of_experience AS "yearsOfExperience",
+                a.phone_number AS "phoneNumber",
+                array_agg(s.name) AS specialties
+            FROM advocates a
+            LEFT JOIN advocate_specialties adv_spe
+                ON a.id = adv_spe.advocate_id
+            LEFT JOIN specialties s
+                ON adv_spe.specialty_id = s.id
+            WHERE
+                ($1 IS NULL OR adv_spe.specialty_id = $1)
+                AND (
+                    $2 IS NULL
+                    OR CONCAT(a.first_name, '' '', a.last_name) ILIKE ''%%'' || $2 || ''%%''
+                    OR a.city ILIKE ''%%'' || $2 || ''%%''
+                    OR a.degree ILIKE ''%%'' || $2 || ''%%''
+                    OR a.years_of_experience::text ILIKE ''%%'' || $2 || ''%%''
+                    OR a.phone_number::text ILIKE ''%%'' || $2 || ''%%''
+                )
+            GROUP BY a.id, a.first_name, a.last_name, a.city, a.degree, a.years_of_experience, a.phone_number
+        )
+        SELECT
+            fa.id,
+            fa."firstName",
+            fa."lastName",
+            fa.city,
+            fa.degree,
+            fa."yearsOfExperience",
+            fa."phoneNumber",
+            fa.specialties,
+            COUNT(*) OVER() AS "totalCount"
+        FROM filtered_advocates fa
+        ORDER BY %s
+        LIMIT $3 OFFSET $4
+    ', v_order_by)
+    USING p_specialty_id, p_term, p_page_size, v_offset;
+END;
 $$;
