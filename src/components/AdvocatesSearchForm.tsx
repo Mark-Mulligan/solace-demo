@@ -201,6 +201,27 @@ const AdovcatesSearchForm = () => {
           onChange={handleSpecialtySelect}
           isMulti
           isClearable
+          placeholder="Filter by specialties..."
+          styles={{
+            control: (base) => ({ ...base }),
+            option: (base) => ({ ...base }),
+            menu: (base) => ({ ...base }),
+            multiValue: (base) => ({ ...base }),
+            multiValueLabel: (base) => ({ ...base }),
+            multiValueRemove: (base) => ({ ...base }),
+            placeholder: (base) => ({ ...base }),
+            input: (base) => ({ ...base }),
+            singleValue: (base) => ({ ...base }),
+            valueContainer: (base) => ({ ...base }),
+            indicatorsContainer: (base) => ({ ...base }),
+            clearIndicator: (base) => ({ ...base }),
+            dropdownIndicator: (base) => ({ ...base }),
+            indicatorSeparator: (base) => ({ ...base }),
+            menuList: (base) => ({ ...base }),
+            noOptionsMessage: (base) => ({ ...base }),
+            group: (base) => ({ ...base }),
+            groupHeading: (base) => ({ ...base }),
+          }}
         />
       </div>
     </div>
